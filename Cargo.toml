@@ -1,0 +1,9 @@
+[package]
+name = "neural-network"
+version = "0.1.0"
+authors = ["SpicySpices <42986319+SpicySpices@users.noreply.github.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
