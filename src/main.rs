@@ -15,20 +15,18 @@ fn main() {
     ]).collect::<Vec<[Vec<f64>; 2]>>();
 
     let start = Instant::now();
+
     let mut nn = FeedForward::new(2);
     nn.add_layer(3, "sigmoid");
     nn.add_layer(1, "sigmoid");
     
     nn.epochs_per_print = 2000;
     nn.stochastic_noise = 0.0;
-    nn.learning_rate = 0.1;
+    
+    //nn.learning_rate = learning_rate::constant(0.5);
+    nn.learning_rate = learning_rate::momentum(0.5, 0.75);
 
     nn.stochastic_gradient_descent(&parsed_training_data, 10000);
-
-    println!("{:?}", nn.test(&vec![0.0, 0.0]));
-    println!("{:?}", nn.test(&vec![0.0, 1.0]));
-    println!("{:?}", nn.test(&vec![1.0, 0.0]));
-    println!("{:?}", nn.test(&vec![1.0, 1.0]));
 
     println!("Time: {:?}", start.elapsed());
 }

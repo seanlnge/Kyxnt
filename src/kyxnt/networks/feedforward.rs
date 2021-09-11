@@ -1,29 +1,20 @@
 use crate::kyxnt::nodes::*;
+use crate::kyxnt::networks::functions::*;
 
 use rand::prelude::*;
 use rand::seq::SliceRandom;
 
 pub struct FeedForward {
-    /*
-    `nodes` contains list of all nodes contained in network organized by layer:
-        Input nodes are at beginning
-        Hidden nodes somewhere in middle
-        Output nodes at end
-    */
+    // `nodes` contains list of all nodes contained in network organized by layer
     pub nodes: Vec<Node>,
 
-    /*
-    `layers` contains organization of layers, stores where each layer in `nodes` ends:
-        [2, 5, 6] stores a 2 - 3 - 1 network
-        (layer[0]..layers[1]) = [2, 3, 4] - indexes of hidden layer `nodes`
-        (0..layer[0]) = [0, 1] - indexes of input layer in `nodes`
-    */
+    // `layers` contains organization of layers, stores where each layer in `nodes` ends:
+    // [2, 5, 6] stores a 2-3-1 network; l[0]..l[1] = [2, 3, 4] - indexes of hidden layer in `nodes`
     pub layers: Vec<usize>,
 
-
-    pub epochs_per_print: usize,
-    pub learning_rate: f64,
-    pub stochastic_noise: f64
+    pub learning_rate: LearningRate, 
+    pub epochs_per_print: usize, // Amount of epochs in between cost prints
+    pub stochastic_noise: f64 // Amount of noise
 }
 impl FeedForward {
     pub fn new(input_size: usize) -> Self {
@@ -32,7 +23,7 @@ impl FeedForward {
             layers: vec![input_size],
             epochs_per_print: 0,
             stochastic_noise: 0.0,
-            learning_rate: 0.1
+            learning_rate: learning_rate::constant(0.1),
         }
     }
 
@@ -135,7 +126,7 @@ impl FeedForward {
                         
                         // Request changes to previous activations
                         for (input_index, requested) in changes.iter().enumerate() {
-                            activation_changes[input_index] +=  *requested * self.learning_rate;
+                            activation_changes[input_index] +=  *requested;
                         }
                     }
 
@@ -147,8 +138,9 @@ impl FeedForward {
                     }
                 }
 
+                // Loop over nodes to calulate changes
                 for node in self.nodes[self.layers[0]..].iter_mut() {
-                    node.apply_changes();
+                    node.apply_changes(&self.learning_rate);
                 }
             }
 

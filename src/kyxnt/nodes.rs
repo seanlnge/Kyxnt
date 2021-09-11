@@ -1,3 +1,5 @@
+use crate::kyxnt::networks::functions::learning_rate;
+
 use std::process;
 
 mod standard;
@@ -40,9 +42,16 @@ impl Node {
         }
     }
 
-    pub fn apply_changes(&mut self) {
+    pub fn apply_changes(&mut self, learning_rate: &learning_rate::LearningRate) {
         match self {
-            Node::Standard(x) => x.apply_changes(),
+            Node::Standard(x) => x.apply_changes(learning_rate),
+            _ => process::exit(1)
+        }
+    }
+
+    pub fn standard(&mut self) -> &mut Standard {
+        match self {
+            Node::Standard(x) => x,
             _ => process::exit(1)
         }
     }

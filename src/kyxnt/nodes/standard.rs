@@ -1,3 +1,5 @@
+use crate::kyxnt::networks::functions::learning_rate::LearningRate;
+
 use std::process;
 use rand::prelude::*;
 
@@ -9,8 +11,11 @@ pub struct Standard {
     pub change_summations: (f64, Vec<f64>, usize),
     pub input_indexes: Vec<usize>,
 
-    pub activation_function: Box<dyn Fn(f64) -> f64>,
-    pub derivative_function: Box<dyn Fn(f64) -> f64>
+    pub previous_weight_gradients: Vec<Vec<f64>>, // PreviousIterations< Weights<f64> >
+    pub previous_bias_gradients: Vec<f64>,
+
+    pub activation_function: Box<dyn Fn(f64) -> f64>, // Fn(total) -> activation
+    pub derivative_function: Box<dyn Fn(f64) -> f64>  // Fn(activation) -> derivative
 }
 impl Standard {
     pub fn new(input_indexes: Vec<usize>, activation: &str) -> Self {
@@ -44,6 +49,10 @@ impl Standard {
 
             activation: 0.0,
             change_summations: (0.0, input_indexes.iter().map(|_| 0.0).collect(), 0),
+
+            previous_weight_gradients: input_indexes.iter().map(|_| vec![]).collect(),
+            previous_bias_gradients: vec![],
+
             input_indexes,
 
             activation_function,
@@ -73,11 +82,13 @@ impl Standard {
         
         // d(pre_activation value) wrt bias
         self.change_summations.0 += dcdz;
+        self.previous_bias_gradients.push(dcdz);
 
         // Calculate d(pre_activation value) wrt each variable
         for (index, input) in input_nodes.iter().enumerate() {
             optimal_inputs.push(dcdz * self.weights[index]);
             self.change_summations.1[index] += dcdz * input;
+            self.previous_weight_gradients[index].push(dcdz * input);
         }
 
         // Increment iterations and return
@@ -85,10 +96,29 @@ impl Standard {
         optimal_inputs
     }
 
-    pub fn apply_changes(&mut self) {
+    pub fn apply_changes(&mut self, learning_rate_function: &LearningRate) {
         for (i, weight_change) in self.change_summations.1.iter().enumerate() {
-            self.weights[i] -= weight_change / self.change_summations.2 as f64;
+            let gradient = weight_change / self.change_summations.2 as f64;
+            let adjusted_gradient = match learning_rate_function {
+                LearningRate::Constant(rate) => gradient * rate,
+                LearningRate::Momentum(ref func) => {
+                    let pgi = self.previous_bias_gradients.len() as isize - 2;
+                    let previous_gradient = if pgi >= 0 { self.previous_weight_gradients[i][pgi as usize] } else { 0.0 };
+                    func(gradient, previous_gradient)
+                }
+            };
+            self.weights[i] -= adjusted_gradient;
         }
-        self.bias -= self.change_summations.0 / self.change_summations.2 as f64;
+
+        let gradient = self.change_summations.0 / self.change_summations.2 as f64;
+        let adjusted_gradient = match learning_rate_function {
+            LearningRate::Constant(rate) => gradient * rate,
+            LearningRate::Momentum(ref func) => {
+                let pgi = self.previous_bias_gradients.len() as isize - 2;
+                let previous_gradient = if pgi >= 0 { self.previous_bias_gradients[pgi as usize] } else { 0.0 };
+                func(gradient, previous_gradient)
+            }
+        };
+        self.bias -= adjusted_gradient;
     }
 }
