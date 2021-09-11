@@ -21,10 +21,11 @@ fn main() {
     nn.add_layer(1, "sigmoid");
     
     nn.epochs_per_print = 2000;
-    nn.stochastic_noise = 0.0;
+    nn.stochastic_noise = 1.0;
     
     //nn.learning_rate = learning_rate::constant(0.5);
-    nn.learning_rate = learning_rate::momentum(0.5, 0.75);
+    //nn.learning_rate = learning_rate::momentum(1.0, 0.9);
+    nn.learning_rate = learning_rate::linear_decay(1.0);
 
     nn.stochastic_gradient_descent(&parsed_training_data, 10000);
 

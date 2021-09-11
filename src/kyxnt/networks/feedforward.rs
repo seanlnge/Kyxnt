@@ -140,7 +140,7 @@ impl FeedForward {
 
                 // Loop over nodes to calulate changes
                 for node in self.nodes[self.layers[0]..].iter_mut() {
-                    node.apply_changes(&self.learning_rate);
+                    node.apply_changes(&self.learning_rate, &vec![epoch as f64 / epochs as f64]);
                 }
             }
 

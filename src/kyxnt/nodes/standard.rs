@@ -82,13 +82,11 @@ impl Standard {
         
         // d(pre_activation value) wrt bias
         self.change_summations.0 += dcdz;
-        self.previous_bias_gradients.push(dcdz);
 
         // Calculate d(pre_activation value) wrt each variable
         for (index, input) in input_nodes.iter().enumerate() {
             optimal_inputs.push(dcdz * self.weights[index]);
             self.change_summations.1[index] += dcdz * input;
-            self.previous_weight_gradients[index].push(dcdz * input);
         }
 
         // Increment iterations and return
@@ -96,17 +94,19 @@ impl Standard {
         optimal_inputs
     }
 
-    pub fn apply_changes(&mut self, learning_rate_function: &LearningRate) {
+    pub fn apply_changes(&mut self, learning_rate_function: &LearningRate, parameters: &Vec<f64>) {
         for (i, weight_change) in self.change_summations.1.iter().enumerate() {
             let gradient = weight_change / self.change_summations.2 as f64;
             let adjusted_gradient = match learning_rate_function {
                 LearningRate::Constant(rate) => gradient * rate,
                 LearningRate::Momentum(ref func) => {
-                    let pgi = self.previous_bias_gradients.len() as isize - 2;
+                    let pgi = self.previous_bias_gradients.len() as isize - 1;
                     let previous_gradient = if pgi >= 0 { self.previous_weight_gradients[i][pgi as usize] } else { 0.0 };
                     func(gradient, previous_gradient)
                 }
+                LearningRate::Decay(ref func) => func(gradient, parameters[0])
             };
+            self.previous_weight_gradients[i].push(-adjusted_gradient);
             self.weights[i] -= adjusted_gradient;
         }
 
@@ -114,11 +114,13 @@ impl Standard {
         let adjusted_gradient = match learning_rate_function {
             LearningRate::Constant(rate) => gradient * rate,
             LearningRate::Momentum(ref func) => {
-                let pgi = self.previous_bias_gradients.len() as isize - 2;
+                let pgi = self.previous_bias_gradients.len() as isize - 1;
                 let previous_gradient = if pgi >= 0 { self.previous_bias_gradients[pgi as usize] } else { 0.0 };
                 func(gradient, previous_gradient)
             }
+            LearningRate::Decay(ref func) => func(gradient, parameters[0])
         };
+        self.previous_bias_gradients.push(-adjusted_gradient);
         self.bias -= adjusted_gradient;
     }
 }
