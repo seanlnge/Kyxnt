@@ -98,7 +98,6 @@ impl Standard {
         for (i, weight_change) in self.change_summations.1.iter().enumerate() {
             let gradient = weight_change / self.change_summations.2 as f64;
             let adjusted_gradient = match learning_rate_function {
-                LearningRate::Constant(rate) => gradient * rate,
                 LearningRate::SingleParameter(ref func) => func(gradient),
                 LearningRate::Decay(ref func) => func(gradient, parameters[0]),
                 LearningRate::Momentum(ref func) => {
@@ -114,7 +113,6 @@ impl Standard {
 
         let gradient = self.change_summations.0 / self.change_summations.2 as f64;
         let adjusted_gradient = match learning_rate_function {
-            LearningRate::Constant(rate) => gradient * rate,
             LearningRate::SingleParameter(ref func) => func(gradient),
             LearningRate::Decay(ref func) => func(gradient, parameters[0]),
             LearningRate::Momentum(ref func) => {
