@@ -99,13 +99,15 @@ impl Standard {
             let gradient = weight_change / self.change_summations.2 as f64;
             let adjusted_gradient = match learning_rate_function {
                 LearningRate::Constant(rate) => gradient * rate,
+                LearningRate::SingleParameter(ref func) => func(gradient),
+                LearningRate::Decay(ref func) => func(gradient, parameters[0]),
                 LearningRate::Momentum(ref func) => {
                     let pgi = self.previous_bias_gradients.len() as isize - 1;
                     let previous_gradient = if pgi >= 0 { self.previous_weight_gradients[i][pgi as usize] } else { 0.0 };
                     func(gradient, previous_gradient)
                 }
-                LearningRate::Decay(ref func) => func(gradient, parameters[0])
             };
+
             self.previous_weight_gradients[i].push(-adjusted_gradient);
             self.weights[i] -= adjusted_gradient;
         }
@@ -113,13 +115,15 @@ impl Standard {
         let gradient = self.change_summations.0 / self.change_summations.2 as f64;
         let adjusted_gradient = match learning_rate_function {
             LearningRate::Constant(rate) => gradient * rate,
+            LearningRate::SingleParameter(ref func) => func(gradient),
+            LearningRate::Decay(ref func) => func(gradient, parameters[0]),
             LearningRate::Momentum(ref func) => {
                 let pgi = self.previous_bias_gradients.len() as isize - 1;
                 let previous_gradient = if pgi >= 0 { self.previous_bias_gradients[pgi as usize] } else { 0.0 };
                 func(gradient, previous_gradient)
             }
-            LearningRate::Decay(ref func) => func(gradient, parameters[0])
         };
+
         self.previous_bias_gradients.push(-adjusted_gradient);
         self.bias -= adjusted_gradient;
     }
