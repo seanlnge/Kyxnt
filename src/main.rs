@@ -26,7 +26,7 @@ fn main() {
     //nn.learning_rate = learning_rate::constant(0.5);
     //nn.learning_rate = learning_rate::momentum(1.0, 0.9);
     //nn.learning_rate = learning_rate::linear_decay(1.0);
-    nn.learning_rate = learning_rate::inverse_square_root(0.5);
+    nn.learning_rate = learning_rate::decay(0.0003, 0.0001);
 
     nn.stochastic_gradient_descent(&parsed_training_data, 10000);
 

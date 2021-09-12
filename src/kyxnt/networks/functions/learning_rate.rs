@@ -14,8 +14,10 @@ pub fn linear_decay(initial_rate: f64) -> LearningRate {
     }))
 }
 
-pub fn inverse_square_root(initial_rate: f64) -> LearningRate {
-    LearningRate::SingleParameter(Box::new(move |gradient| gradient.sqrt().recip()))
+pub fn decay(decay_factor: f64, epsilon: f64) -> LearningRate {
+    LearningRate::Decay(Box::new(move |gradient, normalized_epoch| {
+        gradient / (1.0 + decay_factor * normalized_epoch / epsilon)
+    }))
 }
 
 pub enum LearningRate {
